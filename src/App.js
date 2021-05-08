@@ -10,15 +10,18 @@ import firebaseConfig from "./firebase.config";
 import firebase from "firebase/app";
 import "firebase/auth";
 import { useState } from "react";
+
 // if (!firebase.apps.length) {
 //   firebase.initializeApp({ firebaseConfig });
 // } else {
 //   firebase.app();
 // }
+
 firebase.initializeApp(firebaseConfig);
 
 function App() {
   const googleProvider = new firebase.auth.GoogleAuthProvider();
+  const fbProvider = new firebase.auth.FacebookAuthProvider();
 
   const [user, setUser] = useState({
     isSignedUp: false,
@@ -27,7 +30,7 @@ function App() {
     password: "",
   });
   const handleBlur = (event) => {
-    let isFildValid = true;
+    let isFildValid = false;
     if (event.target.name === "email") {
       isFildValid = /\S+@\S+\.\S+/.test(event.target.value);
       // console.log(isFildValid);
@@ -41,6 +44,7 @@ function App() {
     if (isFildValid) {
       const newUserInfo = { ...user };
       newUserInfo[event.target.name] = event.target.value;
+      console.log(newUserInfo);
       setUser(newUserInfo);
     }
   };
@@ -50,18 +54,38 @@ function App() {
       firebase
         .auth()
         .createUserWithEmailAndPassword(user.email, user.password)
-        .then((userCredential) => {
-          // Signed in
-          const user = userCredential.user;
-          console.log(user);
-          // ...
+        .then((res) => {
+          const newUserInfo = { ...user };
+          newUserInfo.error = " ";
+          newUserInfo.success = true;
+          setUser(newUserInfo);
+          // updateUserName(user.name);
         })
         .catch((error) => {
-          console.log(error.message);
-          // ..
+          const newUserInfo = { ...user };
+          newUserInfo.error = error.message;
+          newUserInfo.success = false;
+          setUser(newUserInfo);
+          // let errorMessage = error.message;
         });
     }
   };
+  // const updateUserName = (name) => {
+  //   const user = firebase.auth().currentUser;
+
+  //   user
+  //     .updateProfile({
+  //       displayName: name,
+  //     })
+  //     .then(function () {
+  //       // Update successful.
+  //       console.log("Name Update successfully");
+  //     })
+  //     .catch(function (error) {
+  //       // An error happened.
+  //       console.log(error);
+  //     });
+  // };
 
   const handleGoogleSignUp = () => {
     firebase
@@ -85,6 +109,34 @@ function App() {
         var email = error.email;
         // The firebase.auth.AuthCredential type that was used.
         var credential = error.credential;
+        // ...
+      });
+  };
+  const handleFacebookSignUp = () => {
+    firebase
+      .auth()
+      .signInWithPopup(fbProvider)
+      .then((result) => {
+        /** @type {firebase.auth.OAuthCredential} */
+        var credential = result.credential;
+
+        // The signed-in user info.
+        var user = result.user;
+
+        // This gives you a Facebook Access Token. You can use it to access the Facebook API.
+        var accessToken = credential.accessToken;
+
+        // ...
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        // The email of the user's account used.
+        var email = error.email;
+        // The firebase.auth.AuthCredential type that was used.
+        var credential = error.credential;
+
         // ...
       });
   };
@@ -144,7 +196,7 @@ function App() {
           <button onClick={handleGoogleSignUp}>
             <FcGoogle size={50}></FcGoogle>
           </button>
-          <button>
+          <button onClick={handleFacebookSignUp}>
             <FaFacebookSquare size={50}></FaFacebookSquare>
           </button>
           <button>
